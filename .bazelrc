@@ -1,0 +1,11 @@
+build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true
+build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain
+build --spawn_strategy=standalone
+build --strategy=Genrule=standalone
+build -c opt
+build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17
+build --action_env TF_HEADER_DIR="/Users/WaldemarMeier/.pyenv/versions/3.7.11/lib/python3.7/site-packages/tensorflow/include"
+build --action_env TF_SHARED_LIBRARY_DIR="/Users/WaldemarMeier/.pyenv/versions/3.7.11/lib/python3.7/site-packages/tensorflow"
+build --action_env TF_SHARED_LIBRARY_NAME="libtensorflow_framework.dylib"
+build --action_env TF_NEED_CUDA="0"
