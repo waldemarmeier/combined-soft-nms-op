@@ -1,2 +1,1 @@
-recursive-include tensorflow_zero_out *.so
-recursive-include tensorflow_combined_soft_nms
+recursive-include tensorflow_combined_soft_nms *.so
