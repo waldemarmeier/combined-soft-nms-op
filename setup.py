@@ -49,9 +49,9 @@ class BinaryDistribution(Distribution):
 setup(
     name=project_name,
     version=__version__,
-    description=('tensorflow-custom-ops is an examples for custom ops for TensorFlow'),
-    author='Google Inc.',
-    author_email='opensource@google.com',
+    description=('custom soft non maximum suppresion op for tensorflow'),
+    author='Waldemar Meier',
+    author_email='info@waldemarmeier.com',
     # Contained modules and scripts.
     packages=find_packages(),
     install_requires=REQUIRED_PACKAGES,
@@ -73,5 +73,5 @@ setup(
         'Topic :: Software Development :: Libraries',
     ],
     license='Apache 2.0',
-    keywords='tensorflow custom op machine learning',
+    keywords='tensorflow custom op machine learning soft nms',
 )
