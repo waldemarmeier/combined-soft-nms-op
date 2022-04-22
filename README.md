@@ -56,4 +56,5 @@ And you should see the op zeroed out all input elements except the first one:
 - unit tests
 - optimzations
   - remove anchor anchor boxes where max prob is below threshold
-  - run per class nms only for subset of anchor boxes where respective class has the max value 
+  - run per class nms only for subset of anchor boxes where respective class has the max value
+- GPU implementation

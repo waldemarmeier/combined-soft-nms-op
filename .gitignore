@@ -1,3 +1,4 @@
-.vscode/*
+.vscode/**
 *.so
-artifacts/*
+artifacts/**
+*.pyc

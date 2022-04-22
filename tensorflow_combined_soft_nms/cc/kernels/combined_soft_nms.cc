@@ -464,7 +464,7 @@ void BatchedNonMaxSuppressionOp(
         num_boxes,
         size_per_class,
         iou_threshold,
-        iou_threshold, 
+        score_threshold, 
         soft_nms_sigma, 
         create_result_cand_fn,
         similarity_fn, 
