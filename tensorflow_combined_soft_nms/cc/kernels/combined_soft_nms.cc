@@ -301,7 +301,9 @@ void DoNonMaxSuppressionOpV2(
   T scale = static_cast<T>(0.0);
   bool is_soft_nms = soft_nms_sigma > static_cast<T>(0.0);
   if (is_soft_nms) {
-    scale = static_cast<T>(-0.5) / soft_nms_sigma;
+    // for some reason its -.5 in the original tf implementation, seems like bug
+    // see https://github.com/tensorflow/tensorflow/issues/40253
+    scale = static_cast<T>(-1.0) / soft_nms_sigma;
   }
 
   auto suppress_weight = [similarity_threshold, scale,
