@@ -157,21 +157,17 @@ static inline ResultCandiateCreator CreateResultCandiateCreatorFn(
 // adjusted, considers q dimension in combined nms op
 // Return intersection-over-union overlap between boxes i and j
 template <typename T>
-static inline float IOU(typename TTypes<T, 3>::ConstTensor boxes, const int q, 
+static inline float IOU(typename TTypes<T, 4>::ConstTensor boxes, const int batch_idx, const int q, 
                         const int i, int j) {
 
-  auto boxes_ = [&](int i_, int j_) {
-    return boxes(i_, q, j_);
-  };
-
-  const float ymin_i = Eigen::numext::mini<float>(boxes_(i, 0), boxes_(i, 2));
-  const float xmin_i = Eigen::numext::mini<float>(boxes_(i, 1), boxes_(i, 3));
-  const float ymax_i = Eigen::numext::maxi<float>(boxes_(i, 0), boxes_(i, 2));
-  const float xmax_i = Eigen::numext::maxi<float>(boxes_(i, 1), boxes_(i, 3));
-  const float ymin_j = Eigen::numext::mini<float>(boxes_(j, 0), boxes_(j, 2));
-  const float xmin_j = Eigen::numext::mini<float>(boxes_(j, 1), boxes_(j, 3));
-  const float ymax_j = Eigen::numext::maxi<float>(boxes_(j, 0), boxes_(j, 2));
-  const float xmax_j = Eigen::numext::maxi<float>(boxes_(j, 1), boxes_(j, 3));
+  const float ymin_i = Eigen::numext::mini<float>(boxes(batch_idx, i, q, 0), boxes(batch_idx, i, q, 2));
+  const float xmin_i = Eigen::numext::mini<float>(boxes(batch_idx, i, q, 1), boxes(batch_idx, i, q, 3));
+  const float ymax_i = Eigen::numext::maxi<float>(boxes(batch_idx, i, q, 0), boxes(batch_idx, i, q, 2));
+  const float xmax_i = Eigen::numext::maxi<float>(boxes(batch_idx, i, q, 1), boxes(batch_idx, i, q, 3));
+  const float ymin_j = Eigen::numext::mini<float>(boxes(batch_idx, j, q, 0), boxes(batch_idx, j, q, 2));
+  const float xmin_j = Eigen::numext::mini<float>(boxes(batch_idx, j, q, 1), boxes(batch_idx, j, q, 3));
+  const float ymax_j = Eigen::numext::maxi<float>(boxes(batch_idx, j, q, 0), boxes(batch_idx, j, q, 2));
+  const float xmax_j = Eigen::numext::maxi<float>(boxes(batch_idx, j, q, 1), boxes(batch_idx, j, q, 3));
   const float area_i = (ymax_i - ymin_i) * (xmax_i - xmin_i);
   const float area_j = (ymax_j - ymin_j) * (xmax_j - xmin_j);
   if (area_i <= 0 || area_j <= 0) {
@@ -190,9 +186,9 @@ static inline float IOU(typename TTypes<T, 3>::ConstTensor boxes, const int q,
 // also considers q
 template <typename T>
 static inline std::function<float(int, int)> CreateIOUSimilarityFn(
-    const Tensor& boxes, const int q) {
-  typename TTypes<T, 3>::ConstTensor boxes_data = boxes.tensor<T, 3>();
-  return std::bind(&IOU<T>, boxes_data, q, std::placeholders::_1,
+    const Tensor& boxes, const int batch_idx, const int q) {
+  const typename TTypes<T, 4>::ConstTensor boxes_data = boxes.tensor<T, 4>();
+  return std::bind(&IOU<T>, boxes_data, batch_idx, q, std::placeholders::_1,
                    std::placeholders::_2);
 }
 
@@ -279,7 +275,7 @@ void DoNonMaxSuppressionOpV2(
   bool return_scores_tensor = false,
   bool pad_to_max_output_size = false,
   int* ptr_num_valid_outputs = nullptr) {
-
+  
   struct Candidate {
     int box_index;
     T score;
@@ -392,20 +388,22 @@ void DoNonMaxSuppressionOpV2(
   if (ptr_num_valid_outputs) {
     *ptr_num_valid_outputs = num_valid_outputs;
   }
+
 }
 
 void BatchedNonMaxSuppressionOp(
     OpKernelContext* context, 
     const Tensor& inp_boxes, 
     const Tensor& inp_scores,
-    int num_boxes,
+    const int num_boxes,
     const int max_size_per_class,
     const int total_size_per_batch,
     const float score_threshold, 
     const float iou_threshold,
     const float soft_nms_sigma,
-    bool pad_per_class = false,
-    bool clip_boxes = true) {
+    const bool pad_per_class = false,
+    const bool clip_boxes = true) {
+
   const int num_batches = inp_boxes.dim_size(0);
   int num_classes = inp_scores.dim_size(2);
   int q = inp_boxes.dim_size(2);
@@ -435,16 +433,17 @@ void BatchedNonMaxSuppressionOp(
   auto create_result_cand_fn = CreateResultCandiateCreatorFn(q);
   auto shard_nms = [&](int begin, int end) {
     for (int idx = begin; idx < end; ++idx) {
+            
       int batch_idx = idx / num_classes;
       int class_idx = idx % num_classes;
 
-      const Tensor& batch_boxes = inp_boxes.SubSlice(batch_idx);
       const int q_actual = (q > 1) ? class_idx : 0;
-      auto similarity_fn = CreateIOUSimilarityFn<float>(batch_boxes, q_actual);
+
+      auto similarity_fn = CreateIOUSimilarityFn<float>(inp_boxes, batch_idx, q_actual);
 
       // [num_boxes, num_cls]
       std::vector<float> scores_data_vec(num_boxes);
-      
+
       for(int box_idx = 0; box_idx < num_boxes; box_idx++) {
         // start
         //  - go to batch_idx (batch_idx * scores_per_batch)
@@ -492,21 +491,6 @@ void BatchedNonMaxSuppressionOp(
   const CPUDevice& d = context->eigen_device<CPUDevice>();
   d.parallelFor(length, cost, shard_nms);
 
-
-  // remove this, just for debugging
-  for (auto& cands : result_candidate_vec){
-    for (auto& cand : cands) {
-
-      if (cand.box_index == -1){
-        continue;
-      }
-
-      // printf("box_idx: %d, score: %F, class_idx: %d, coords {%F, %F, %F, %F} \n", 
-      //                     cand.box_index, cand.score, cand.class_idx, cand.box_coord[0],
-      //                     cand.box_coord[1], cand.box_coord[2], cand.box_coord[3]);
-    }
-  }
-
   int per_batch_size = total_size_per_batch;
   if (pad_per_class) {
     per_batch_size =
@@ -518,7 +502,6 @@ void BatchedNonMaxSuppressionOp(
   OP_REQUIRES_OK(context, context->allocate_output(3, valid_detections_shape,
                                                    &valid_detections_t));
   auto valid_detections_flat = valid_detections_t->template flat<int>();
-
   auto shard_result = [&](int begin, int end) {
     for (int batch_idx = begin; batch_idx < end; ++batch_idx) {      
       SelectResultPerBatch(
@@ -579,9 +562,9 @@ void BatchedNonMaxSuppressionOp(
   compute_cycles = Eigen::TensorOpCost::AddCost<int>() * 2 +
                    Eigen::TensorOpCost::MulCost<int>() * 2 +
                    Eigen::TensorOpCost::DivCost<float>() * 2;
-  const Eigen::TensorOpCost cost_copy_result(input_bytes, output_bytes,
-                                             compute_cycles);
+  const Eigen::TensorOpCost cost_copy_result(input_bytes, output_bytes, compute_cycles);
   d.parallelFor(length, cost_copy_result, shard_copy_result);
+
 }
 
 } // namespace
@@ -599,6 +582,7 @@ class CombinedSoftNonMaxSuppressionOp : public OpKernel {
   }
 
   void Compute(OpKernelContext* context) override {
+    
     // boxes: [batch_size, num_anchors, q, 4]
     const Tensor& boxes = context->input(0);
     // scores: [batch_size, num_anchors, num_classes]
