@@ -6,7 +6,7 @@ COMBINED_SOFT_NMS_SRCS = $(wildcard tensorflow_combined_soft_nms/cc/kernels/*.cc
 TF_CFLAGS := $(shell $(PYTHON_BIN_PATH) -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))')
 TF_LFLAGS := $(shell $(PYTHON_BIN_PATH) -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))')
 
-CFLAGS = ${TF_CFLAGS} -fPIC -O2 -std=c++11
+CFLAGS = ${TF_CFLAGS} -fPIC -O2 -std=c++14
 LDFLAGS = -shared ${TF_LFLAGS}
 
 COMBINED_SOFT_NMS_TARGET_LIB = tensorflow_combined_soft_nms/python/ops/_combined_soft_nms_ops.so
