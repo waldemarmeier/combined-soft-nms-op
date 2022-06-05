@@ -1,5 +1,4 @@
 CXX := g++
-NVCC := nvcc
 PYTHON_BIN_PATH = python
 
 COMBINED_SOFT_NMS_SRCS = $(wildcard tensorflow_combined_soft_nms/cc/kernels/*.cc) $(wildcard tensorflow_combined_soft_nms/cc/ops/*.cc)
