@@ -25,7 +25,7 @@ Then test out the pip package
 
 ```bash
 cd ..
-python -c "import tensorflow as tf; from tensorflow_combined_soft_nms.python.ops.combined_soft_nms_ops import combined_soft_nms;  tf.print(combined_soft_nms(tf.random.uniform((2,2,1,4)), tf.random.uniform((2,2,3)), 5, 5, .5, .35, .5))" -c "import tensorflow as tf; from tensorflow_combined_soft_nms.python.ops.combined_soft_nms_ops import combined_soft_nms;  tf.print(combined_soft_nms(tf.random.uniform((2,2,1,4), seed=123), tf.random.uniform((2,2,3), seed=321), 5, 5, .5, .35, .5));"
+python -c "import tensorflow as tf; from tensorflow_combined_soft_nms.python.ops.combined_soft_nms_ops import combined_soft_nms;  tf.print(combined_soft_nms(tf.random.uniform((2,2,1,4)), tf.random.uniform((2,2,3)), 5, 5, .5, .35, .5))"
 ```
 
 And you should see the following output:
