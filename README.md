@@ -1,6 +1,6 @@
 # Combined Soft NMS Custom Tensorflow Op
 
-This is an custom tensorflow op which performs soft non max suppression ([Improving Object Detection With One Line of Code](https://arxiv.org/abs/1704.04503)) on multiple batches and classes.
+This is a custom tensorflow op which performs soft non max suppression ([Improving Object Detection With One Line of Code](https://arxiv.org/abs/1704.04503)) on multiple batches and classes.
 Basically, it is a merge between the two existing ops `tensorflow::ops::NonMaxSuppressionV5` and `tensorflow::ops::CombinedNonMaxSuppression` with minor adjustments.
 
 ## Setup
