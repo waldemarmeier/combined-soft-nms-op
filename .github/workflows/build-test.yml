@@ -21,7 +21,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          make clean combined_soft_nms_op
+          make clean combined_soft_nms_op combined_soft_nms_test combined_soft_nms_pip_pkg
       # - uses: actions/setup-node@v3
       #   with:
       #     node-version: '14'
