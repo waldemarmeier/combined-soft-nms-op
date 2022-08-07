@@ -16,7 +16,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install tensorflow==2.5.3
+          python -m pip install tensorflow==2.9.1
       - name: build stuff
         shell: bash
         run: |
