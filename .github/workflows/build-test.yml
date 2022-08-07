@@ -1,0 +1,29 @@
+name: build-linux
+on: [push]
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo  
+        uses: actions/checkout@v3
+      - name: Install gcc
+        shell: bash
+        run: | 
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt install build-essential
+      - name: install tensorflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install tensorflow==2.5.3
+      - name: build stuff
+        shell: bash
+        run: |
+          set -euo pipefail
+          make clean combined_soft_nms_op
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '14'
+      # - run: npm install -g bats
+      # - run: bats -v
