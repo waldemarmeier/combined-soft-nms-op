@@ -2,3 +2,6 @@
 *.so
 artifacts/**
 *.pyc
+build
+dist
+*.egg-info
